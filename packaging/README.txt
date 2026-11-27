@@ -60,7 +60,9 @@ Press Ctrl+C to stop. Run the same command again to continue; finished songs are
 TROUBLESHOOTING
 ---------------
 * "Windows protected your PC": click "More info" > "Run anyway". The program
-  isn't signed with a paid certificate, so Windows warns about it.
+  isn't code-signed, so Windows warns about it. To avoid the warning, unblock
+  the zip BEFORE extracting it: right-click the zip > Properties > tick
+  "Unblock" > OK (or in PowerShell: Unblock-File .\MusicDownloader-windows.zip).
 * "Could not find ffmpeg": do step 1.
 * "Sign in to confirm you're not a bot": wait a while, use --workers 1, or add
   --cookies-from-browser firefox.

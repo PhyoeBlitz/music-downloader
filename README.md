@@ -19,7 +19,15 @@ and a command-line tool.
 
 ## Download (Windows)
 
-Get **MusicDownloader-windows.zip** from the [latest release](../../releases/latest). It contains:
+**With winget** (installs FFmpeg too; available once the winget listing is approved):
+
+```powershell
+winget install PhyoeBlitz.MusicDownloader
+```
+
+Then run `music-downloader-gui` (app) or `music-downloader` (command line) from a new terminal.
+
+**Or manually:** get **MusicDownloader-windows.zip** from the [latest release](../../releases/latest). It contains:
 
 | File | What it is |
 |---|---|
@@ -28,11 +36,13 @@ Get **MusicDownloader-windows.zip** from the [latest release](../../releases/lat
 | `README.txt` | Setup and usage |
 | `sample.csv` | Example song list |
 
-**You also need FFmpeg.** Run `winget install Gyan.FFmpeg`, or copy `ffmpeg.exe` and `ffprobe.exe`
-next to the exes. [Node.js](https://nodejs.org) is optional but makes YouTube downloads more reliable.
+With the zip you also need **FFmpeg**: run `winget install Gyan.FFmpeg`, or copy `ffmpeg.exe` and
+`ffprobe.exe` next to the exes. [Node.js](https://nodejs.org) is optional but makes YouTube downloads more reliable.
 
-> The exes aren't code-signed yet, so Windows may show *"Windows protected your PC"*.
-> Click **More info → Run anyway**. See [SIGNING.md](SIGNING.md).
+> The exes aren't code-signed, so Windows may show *"Windows protected your PC"*.
+> To avoid it, unblock the zip **before** extracting: right-click it → **Properties** → tick
+> **Unblock** → OK (or `Unblock-File .\MusicDownloader-windows.zip`). Otherwise click
+> **More info → Run anyway**.
 
 ## Song list format
 
@@ -109,7 +119,8 @@ Requires Python 3.10+ and FFmpeg on PATH.
 .\.venv\Scripts\pyinstaller --onefile --windowed --name MusicDownloaderGUI --collect-all yt_dlp_ejs gui.py
 ```
 
-Releases are built by GitHub Actions when a `v*` tag is pushed (see `.github/workflows/release.yml`).
+Releases are built by GitHub Actions when a `v*` tag is pushed (see `.github/workflows/release.yml`),
+which also sends the new version to winget (see [`packaging/winget`](packaging/winget)).
 
 ## Troubleshooting
 
@@ -120,18 +131,7 @@ Releases are built by GitHub Actions when a `v*` tag is pushed (see `.github/wor
 | `Sign in to confirm your age` | Use `--cookies-from-browser firefox` (signed in to YouTube) or a fresh `cookies.txt` |
 | Downloads suddenly fail | Update yt-dlp: `pip install -U yt-dlp yt-dlp-ejs` (or get the latest release) |
 
-## Code signing policy
-
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).
-
-- Committers and reviewers: [PhyoeBlitz](https://github.com/PhyoeBlitz)
-- Approvers: [PhyoeBlitz](https://github.com/PhyoeBlitz)
-
-Only release builds made by this repository's GitHub Actions workflow from tagged commits are
-signed. Every signing request is approved manually. Setup details are in [SIGNING.md](SIGNING.md).
-
-### Privacy policy
+## Privacy
 
 This program will not transfer any information to other networked systems unless specifically
 requested by the user or the person installing or operating it. It only connects to YouTube /

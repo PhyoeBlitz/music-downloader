@@ -9,15 +9,10 @@ on:
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
   build:
     runs-on: windows-latest
-    env:
-      # Signing turns on automatically once the SignPath secret is added
-      # (see SIGNING.md). Until then the exes are published unsigned.
-      HAS_SIGNPATH: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -53,36 +48,6 @@ jobs:
             if ($vi.ProductVersion -ne $env:VERSION) { throw "Version metadata missing in $exe" }
           }
 
-      - name: Upload unsigned exes
-        id: upload-unsigned
-        uses: actions/upload-artifact@v7
-        with:
-          name: unsigned-exes
-          path: |
-            dist/MusicDownloader.exe
-            dist/MusicDownloaderGUI.exe
-
-      - name: Sign with SignPath
-        if: env.HAS_SIGNPATH == 'true'
-        uses: signpath/github-action-submit-signing-request@v3
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
-          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
-          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
-          parameters: |
-            version: "${{ env.VERSION }}"
-          wait-for-completion: true
-          # SignPath Foundation requests wait for manual approval: allow up to 1 hour.
-          wait-for-completion-timeout-in-seconds: 3600
-          output-artifact-directory: signed
-
-      - name: Use signed exes
-        if: env.HAS_SIGNPATH == 'true'
-        run: Copy-Item signed/*.exe dist/ -Force
-
       - name: Package zip
         run: |
           $pkg = "package/MusicDownloader"
@@ -102,6 +67,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $signed = if ($env:HAS_SIGNPATH -eq 'true') { "Signed via SignPath." } else { "Not code-signed yet: Windows may show 'Windows protected your PC' - click More info, then Run anyway." }
-          $notes = "Windows download: **MusicDownloader-windows.zip** (GUI + command line). Requires FFmpeg - see README.txt inside the zip.`n`n$signed"
+          $notes = @(
+            "Windows download: **MusicDownloader-windows.zip** (app + command line). Requires FFmpeg - see README.txt inside the zip."
+            ""
+            "The exes are not code-signed. To avoid the 'Windows protected your PC' warning, right-click the zip, choose Properties, tick **Unblock**, click OK, then extract it. Or run: ``Unblock-File .\MusicDownloader-windows.zip``"
+          ) -join "`n"
           gh release create "${{ github.ref_name }}" MusicDownloader-windows.zip --title "${{ github.ref_name }}" --notes $notes
+
+  # Sends the new version to winget (microsoft/winget-pkgs) as a pull request.
+  # Turns on once the WINGET_TOKEN secret exists; see packaging/winget/README.md.
+  winget:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    env:
+      HAS_WINGET_TOKEN: ${{ secrets.WINGET_TOKEN != '' }}
+    steps:
+      - name: Submit to winget
+        if: env.HAS_WINGET_TOKEN == 'true'
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: PhyoeBlitz.MusicDownloader
+          installers-regex: 'MusicDownloader-windows\.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}
