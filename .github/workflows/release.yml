@@ -30,14 +30,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
+      - name: Work out version
+        run: |
+          # v1.2.3 tag -> 1.2.3; manual runs without a tag get 0.0.0
+          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart("v") } else { "0.0.0" }
+          "VERSION=$v" >> $env:GITHUB_ENV
+          "Version: $v"
+
       - name: Build exes
         run: |
-          pyinstaller --noconfirm --onefile --console  --name MusicDownloader    --collect-all yt_dlp_ejs download_music.py
-          pyinstaller --noconfirm --onefile --windowed --name MusicDownloaderGUI --collect-all yt_dlp_ejs gui.py
+          python packaging/make_version_info.py $env:VERSION MusicDownloader    "Music Downloader (command line)" build/cli_version.txt
+          python packaging/make_version_info.py $env:VERSION MusicDownloaderGUI "Music Downloader"                build/gui_version.txt
+          pyinstaller --noconfirm --onefile --console  --name MusicDownloader    --version-file build/cli_version.txt --collect-all yt_dlp_ejs download_music.py
+          pyinstaller --noconfirm --onefile --windowed --name MusicDownloaderGUI --version-file build/gui_version.txt --collect-all yt_dlp_ejs gui.py
 
       - name: Smoke test
         run: |
           ./dist/MusicDownloader.exe -h | Select-Object -First 3
+          foreach ($exe in "dist/MusicDownloader.exe", "dist/MusicDownloaderGUI.exe") {
+            $vi = (Get-Item $exe).VersionInfo
+            "{0}: {1} {2} - {3}" -f $exe, $vi.ProductName, $vi.ProductVersion, $vi.LegalCopyright
+            if ($vi.ProductVersion -ne $env:VERSION) { throw "Version metadata missing in $exe" }
+          }
 
       - name: Upload unsigned exes
         id: upload-unsigned
@@ -58,7 +72,11 @@ jobs:
           signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
           artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
           github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          parameters: |
+            version: "${{ env.VERSION }}"
           wait-for-completion: true
+          # SignPath Foundation requests wait for manual approval: allow up to 1 hour.
+          wait-for-completion-timeout-in-seconds: 3600
           output-artifact-directory: signed
 
       - name: Use signed exes

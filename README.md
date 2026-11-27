@@ -120,6 +120,25 @@ Releases are built by GitHub Actions when a `v*` tag is pushed (see `.github/wor
 | `Sign in to confirm your age` | Use `--cookies-from-browser firefox` (signed in to YouTube) or a fresh `cookies.txt` |
 | Downloads suddenly fail | Update yt-dlp: `pip install -U yt-dlp yt-dlp-ejs` (or get the latest release) |
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [PhyoeBlitz](https://github.com/PhyoeBlitz)
+- Approvers: [PhyoeBlitz](https://github.com/PhyoeBlitz)
+
+Only release builds made by this repository's GitHub Actions workflow from tagged commits are
+signed. Every signing request is approved manually. Setup details are in [SIGNING.md](SIGNING.md).
+
+### Privacy policy
+
+This program will not transfer any information to other networked systems unless specifically
+requested by the user or the person installing or operating it. It only connects to YouTube /
+YouTube Music (and the thumbnail servers they use) to download the songs listed in the CSV you
+choose. If you choose YouTube sign-in, your browser cookies or `cookies.txt` are sent only to
+YouTube. Nothing is collected, stored or sent anywhere else.
+
 ## Disclaimer
 
 This tool is for downloading content you have the right to download. Downloading from YouTube may

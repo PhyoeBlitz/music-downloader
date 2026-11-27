@@ -20,16 +20,23 @@ In the SignPath web app:
    ```xml
    <?xml version="1.0" encoding="utf-8"?>
    <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+     <parameters>
+       <parameter name="version" required="true" />
+     </parameters>
      <zip-file>
-       <pe-file path="MusicDownloader.exe">
+       <pe-file path="MusicDownloader.exe" product-name="Music Downloader" product-version="${version}">
          <authenticode-sign />
        </pe-file>
-       <pe-file path="MusicDownloaderGUI.exe">
+       <pe-file path="MusicDownloaderGUI.exe" product-name="Music Downloader" product-version="${version}">
          <authenticode-sign />
        </pe-file>
      </zip-file>
    </artifact-configuration>
    ```
+
+   The workflow passes `version` (from the tag, e.g. `1.0.2`) and every exe carries matching
+   Windows version metadata (`packaging/make_version_info.py`), so SignPath only signs files
+   that really are this product at this version.
 3. Create an API token for a CI user that can submit signing requests.
 
 ## 3. Add the values to GitHub
@@ -46,5 +53,16 @@ Repository **Settings → Secrets and variables → Actions**:
 
 ## 4. Release
 
-Push a new tag (`git tag v1.0.1 && git push origin v1.0.1`). The workflow builds, sends the exes
-to SignPath, waits for the signed files and publishes them in the release.
+Push a new tag:
+
+```powershell
+git tag -a v1.0.2 -m "v1.0.2"
+git push origin v1.0.2
+```
+
+The workflow builds, sends the exes to SignPath and waits up to **1 hour** for the signing
+request to be approved in SignPath (the Foundation requires a manual approval for every request),
+then publishes the signed files in the release.
+
+Check: right-click an exe from the release → **Properties → Digital Signatures** should show
+SignPath Foundation, and the release notes say "Signed via SignPath."
